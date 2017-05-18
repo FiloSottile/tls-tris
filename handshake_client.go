@@ -68,6 +68,7 @@ func (c *Conn) clientHandshake() error {
 		nextProtoNeg:                 len(c.config.NextProtos) > 0,
 		secureRenegotiationSupported: true,
 		alpnProtocols:                c.config.NextProtos,
+		extendedMSSupported:          true,
 	}
 
 	if c.handshakes > 0 {
@@ -423,6 +424,13 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 			return err
 		}
 	}
+	c.useEMS = hs.serverHello.extendedMSSupported
+	hs.masterSecret = masterFromPreMasterSecret(c.vers, hs.suite, preMasterSecret, hs.hello.random, hs.serverHello.random, hs.finishedHash, c.useEMS)
+
+	if err := c.config.writeKeyLog(hs.hello.random, hs.masterSecret); err != nil {
+		c.sendAlert(alertInternalError)
+		return errors.New("tls: failed to write to key log: " + err.Error())
+	}
 
 	if chainToSend != nil && len(chainToSend.Certificate) > 0 {
 		certVerify := &certificateVerifyMsg{
@@ -466,12 +474,6 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 		if _, err := c.writeRecord(recordTypeHandshake, certVerify.marshal()); err != nil {
 			return err
 		}
-	}
-
-	hs.masterSecret = masterFromPreMasterSecret(c.vers, hs.suite, preMasterSecret, hs.hello.random, hs.serverHello.random)
-	if err := c.config.writeKeyLog(hs.hello.random, hs.masterSecret); err != nil {
-		c.sendAlert(alertInternalError)
-		return errors.New("tls: failed to write to key log: " + err.Error())
 	}
 
 	hs.finishedHash.discardHandshakeBuffer()
@@ -534,6 +536,15 @@ func (hs *clientHandshakeState) processServerHello() (bool, error) {
 		}
 	}
 
+	if hs.serverHello.extendedMSSupported {
+		if hs.hello.extendedMSSupported {
+			c.useEMS = true
+		} else {
+			c.sendAlert(alertHandshakeFailure)
+			return false, errors.New("tls: server advertised unrequested EMS support")
+		}
+	}
+
 	clientDidNPN := hs.hello.nextProtoNeg
 	clientDidALPN := len(hs.hello.alpnProtocols) > 0
 	serverHasNPN := hs.serverHello.nextProtoNeg
@@ -562,6 +573,10 @@ func (hs *clientHandshakeState) processServerHello() (bool, error) {
 
 	if !hs.serverResumedSession() {
 		return false, nil
+	}
+
+	if hs.session.useEMS != c.useEMS {
+		return false, errors.New("differing EMS state")
 	}
 
 	if hs.session.vers != c.vers {
@@ -634,6 +649,7 @@ func (hs *clientHandshakeState) readSessionTicket() error {
 		masterSecret:       hs.masterSecret,
 		serverCertificates: c.peerCertificates,
 		verifiedChains:     c.verifiedChains,
+		useEMS:             c.useEMS,
 	}
 
 	return nil

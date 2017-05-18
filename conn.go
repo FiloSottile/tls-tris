@@ -62,6 +62,8 @@ type Conn struct {
 	// renegotiation extension. (This is meaningless as a server because
 	// renegotiation is not supported in that case.)
 	secureRenegotiation bool
+	//useEMS is true if we will use/have used the extended MasterSecret extension
+	useEMS bool
 
 	// clientFinishedIsFirst is true if the client sent the first Finished
 	// message during the most recent handshake. This is recorded because
