@@ -88,9 +88,9 @@ func (s *sessionState) marshal() []byte {
 	x[1] = byte(s.vers)
 	x[2] = byte(s.cipherSuite >> 8)
 	x[3] = byte(s.cipherSuite)
-	x[5] = byte(len(s.masterSecret) >> 8)
-	x[6] = byte(len(s.masterSecret))
-	x = x[7:]
+	x[4] = byte(len(s.masterSecret) >> 8)
+	x[5] = byte(len(s.masterSecret))
+	x = x[6:]
 	copy(x, s.masterSecret)
 	x = x[len(s.masterSecret):]
 
