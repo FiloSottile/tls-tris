@@ -18,7 +18,7 @@ var tlsVersionToName = map[string]uint16{
 	"tls13": tls.VersionTLS13,
 }
 
-//Usage client args host:port
+// Usage client args host:port
 func main() {
 	var version string
 	var addr string

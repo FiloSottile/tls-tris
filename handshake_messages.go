@@ -443,6 +443,7 @@ func (m *clientHelloMsg) unmarshal(data []byte) alert {
 	m.earlyData = false
 	m.shortHeaders = false
 	m.extendedMSSupported = false
+
 	if len(data) == 0 {
 		// ClientHello is optionally followed by extension data
 		return alertSuccess

@@ -379,7 +379,7 @@ func (hs *serverHandshakeState) checkForResumption() bool {
 		return false
 	}
 
-	//Upgrade if client now supports EMS
+	// Upgrade if client now supports EMS
 	if hs.clientHello.extendedMSSupported && !hs.sessionState.usedEMS {
 		return false
 	}
