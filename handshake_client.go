@@ -68,7 +68,7 @@ func (c *Conn) clientHandshake() error {
 		nextProtoNeg:                 len(c.config.NextProtos) > 0,
 		secureRenegotiationSupported: true,
 		alpnProtocols:                c.config.NextProtos,
-		extendedMSSupported:          true,
+		extendedMSSupported:          c.config.UseExtendedMasterSecret,
 	}
 
 	if c.handshakes > 0 {
