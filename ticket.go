@@ -72,22 +72,22 @@ func (s *sessionState) equal(i interface{}) bool {
 }
 
 func (s *sessionState) marshal() []byte {
-	length := 2 + 2 + 1 + 2 + len(s.masterSecret) + 2
+	length := 2 + 2 + 2 + len(s.masterSecret) + 2
 	for _, cert := range s.certificates {
 		length += 4 + len(cert)
 	}
 
 	ret := make([]byte, length)
 	x := ret
-	x[0] = byte(s.vers >> 8)
+	was_used := 0
+	if s.usedEMS {
+		was_used = 0x80
+	}
+
+	x[0] = byte(s.vers>>8) | byte(was_used)
 	x[1] = byte(s.vers)
 	x[2] = byte(s.cipherSuite >> 8)
 	x[3] = byte(s.cipherSuite)
-	if s.usedEMS {
-		x[4] = 1
-	} else {
-		x[4] = 0
-	}
 	x[5] = byte(len(s.masterSecret) >> 8)
 	x[6] = byte(len(s.masterSecret))
 	x = x[7:]
@@ -111,15 +111,15 @@ func (s *sessionState) marshal() []byte {
 }
 
 func (s *sessionState) unmarshal(data []byte) alert {
-	if len(data) < 9 {
+	if len(data) < 8 {
 		return alertDecodeError
 	}
 
-	s.vers = uint16(data[0])<<8 | uint16(data[1])
+	s.vers = (uint16(data[0])<<8 | uint16(data[1])) & 0x7fff
 	s.cipherSuite = uint16(data[2])<<8 | uint16(data[3])
-	s.usedEMS = (data[4] == 1)
-	masterSecretLen := int(data[5])<<8 | int(data[6])
-	data = data[7:]
+	s.usedEMS = (data[0] & 0x80) == 0x80
+	masterSecretLen := int(data[4])<<8 | int(data[5])
+	data = data[6:]
 	if len(data) < masterSecretLen {
 		return alertDecodeError
 	}
