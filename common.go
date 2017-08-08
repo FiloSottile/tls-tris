@@ -612,6 +612,10 @@ type Config struct {
 	// tickets.
 	sessionTicketKeys []ticketKey
 
+	// UseExtendedMasterSecret indicates whether or not the connection
+	// should use the extended master secret computation if available
+	UseExtendedMasterSecret bool
+
 	// originalConfig is set to the Config that was passed to Server if
 	// this Config is returned by a GetConfigForClient callback. It's used
 	// by serverInit in order to copy session ticket keys if needed.
@@ -685,6 +689,7 @@ func (c *Config) Clone() *Config {
 		AllowShortHeaders:           c.AllowShortHeaders,
 		SessionTicketSealer:         c.SessionTicketSealer,
 		sessionTicketKeys:           sessionTicketKeys,
+		UseExtendedMasterSecret:     c.UseExtendedMasterSecret,
 		// originalConfig is deliberately not duplicated.
 	}
 }
