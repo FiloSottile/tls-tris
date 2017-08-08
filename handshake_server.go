@@ -380,7 +380,7 @@ func (hs *serverHandshakeState) checkForResumption() bool {
 	}
 
 	// Do not resume connections where client support for EMS has changed
-	if hs.clientHello.extendedMSSupported != hs.sessionState.usedEMS {
+	if (hs.clientHello.extendedMSSupported && c.config.UseExtendedMasterSecret) != hs.sessionState.usedEMS {
 		return false
 	}
 

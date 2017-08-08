@@ -79,9 +79,9 @@ func (s *sessionState) marshal() []byte {
 
 	ret := make([]byte, length)
 	x := ret
-	was_used := 0
+	was_used := byte(0)
 	if s.usedEMS {
-		was_used = 0x80
+		was_used = byte(0x80)
 	}
 
 	x[0] = byte(s.vers>>8) | byte(was_used)
